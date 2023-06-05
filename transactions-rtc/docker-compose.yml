@@ -1,0 +1,46 @@
+version: '3'
+services:
+    rabbitmq:
+        image: rabbitmq:3.10.7-management
+        ports:
+          - 15672:15672
+          - 5672:5672
+    pg:
+        image: postgres:latest
+        ports:
+            - "54321:5432"
+        volumes:
+            - ./data:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_PASSWORD=posrgres
+            - POSTGRES_USER=posrgres
+            - POSTGRES_DB=transactions
+        restart: always
+    db:
+        build:
+            context: .
+            dockerfile: docker/db/Dockerfile
+        links:
+            - pg
+            - rabbitmq
+        depends_on:
+            - "pg"
+            - "rabbitmq"
+        environment:
+            DB_HOST: pg
+            DB_PORT: 54321
+            DB_DATABASE: transactions
+            DB_USERNAME: posrgres
+            DB_PASSWORD: posrgres
+        restart: always
+    http:
+        build:
+            context: .
+            dockerfile: docker/http/Dockerfile
+        environment:
+            DB_HOST: pg
+            DB_PORT: 54321
+            DB_DATABASE: transactions
+            DB_USERNAME: posrgres
+            DB_PASSWORD: posrgres
+        restart: always
